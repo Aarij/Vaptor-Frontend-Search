@@ -89,10 +89,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	
 	
 	
-	<!--<link rel="stylesheet" type="text/css" href="http://localhost:8085/search/css/github.min.css">-->
-	<!--<link rel="stylesheet" type="text/css" href="http://localhost:8085/search/css/custom.css">-->
+	<!--<link rel="stylesheet" type="text/css" href="http://localhost:8085/Vaptor-Frontend-Search/css/github.min.css">-->
+	<!--<link rel="stylesheet" type="text/css" href="http://localhost:8085/Vaptor-Frontend-Search/css/custom.css">-->
 	
-	<script type="text/javascript" src="http://localhost:8085/search/js/applicationScript.js"></script>
+	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/applicationScript.js"></script>
 	
 	
 	
@@ -103,11 +103,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	
 	
 	<!-- inter widget communication library import -->
-	<script type="text/javascript" src="http://localhost:8085/search/js/lib/iwc.js"></script>
+	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/lib/iwc.js"></script>
 	
 	<!-- XMPP connection libraries (Strophe.js) -->
-	<script type="text/javascript" src="http://localhost:8085/search/js/strophe.js"></script>
-	<script type="text/javascript" src="http://localhost:8085/search/js/strophe.register.js"></script>
+	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/strophe.js"></script>
+	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/strophe.register.js"></script>
 	
 
 	<!-- container for actual page content -->
