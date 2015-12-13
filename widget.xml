@@ -2,7 +2,7 @@
 <Module>
   <ModulePrefs title="Search" description="Shows the user preferences"
     author="Aarij" author_email="siddiqui@dbis.rwth-aachen.de"
-    width="300" height="200">
+    width="290" height="380">
 
     <Require feature="opensocial-0.8"></Require>
     <Require feature="openapp"></Require>
@@ -70,8 +70,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<!-- Bootstrap stylesheet import -->
 	<link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
 	<!-- own style information -->
-	<link rel="stylesheet" href="http://CAE-Community-Application-Editor.github.io/frontendComponent-UserPreferencesWidget/css/style.css">
-
+	<link rel="stylesheet" href="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/css/style.css">
+	
+	<link rel="stylesheet" type="text/css" href="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/css/checkbox.css">
 	
 	
 	<!-- import jQuery for AJAX calls -->
@@ -84,47 +85,87 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<!-- additional widget specific imports (put your own imports here as well) -->
 
 	<!-- import the client library -->
-	<script type="text/javascript" src="http://CAE-Community-Application-Editor.github.io/frontendComponent-UserPreferencesWidget/js/lib/las2peerWidgetLibrary.js"></script>
+	<script type="text/javascript" src="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/js/lib/las2peerWidgetLibrary.js"></script>
 	<!-- import application script -->
 	
 	
 	
-	<!--<link rel="stylesheet" type="text/css" href="http://localhost:8085/Vaptor-Frontend-Search/css/github.min.css">-->
-	<!--<link rel="stylesheet" type="text/css" href="http://localhost:8085/Vaptor-Frontend-Search/css/custom.css">-->
+	<!--<link rel="stylesheet" type="text/css" href="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/css/github.min.css">-->
+	<!--<link rel="stylesheet" type="text/css" href="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/css/custom.css">-->
 	
-	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/applicationScript.js"></script>
+	<script type="text/javascript" src="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/js/stopWords.js"></script>
 	
+	<script type="text/javascript" src="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/js/applicationScript.js"></script>
 	
-	
-
   
 </head>
 <body>
 	
 	
 	<!-- inter widget communication library import -->
-	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/lib/iwc.js"></script>
+	<script type="text/javascript" src="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/js/lib/iwc.js"></script>
 	
 	<!-- XMPP connection libraries (Strophe.js) -->
-	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/strophe.js"></script>
-	<script type="text/javascript" src="http://localhost:8085/Vaptor-Frontend-Search/js/strophe.register.js"></script>
+	<script type="text/javascript" src="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/js/strophe.js"></script>
+	<script type="text/javascript" src="http://eiche.informatik.rwth-aachen.de/siddiqui/widgets/Vaptor-Frontend-Search/js/strophe.register.js"></script>
+	
 	
 
 	<!-- container for actual page content -->
 	<div id="notification"></div>
 	<div class="container" id="main-content">
 		
+		
+		
 		<div class="row" style="padding: 5px;">
 			<div class="col-sm-12">
-				<input type="type" class="form-control" id="searchString" placeholder="Search here...">
-				<input id="language" type="checkbox" name="language" value="true" checked> Language
-				<input id="location" type="checkbox" name="location" value="true" checked> Location
-				<input id="duration" type="checkbox" name="duration" value="true" checked> Duration
-				<input id="adaptation" type="checkbox" name="adaptation" value="true" checked> Adaptation<br>
+				<input type="type" class="form-control" id="searchString" onkeydown="if (event.keyCode == 13) document.getElementById('searchbtn').click()" placeholder="Search here...">
+				<div class="modal-1" id="checkboxOrder" data-sequence="LRDOW">
+					
+					<div style="color:#777"><h5><span>Filters</span></h5></div>
+					
+					<div class="checkbox inline">
+						<input id="language" type="checkbox" name="language" value="true" checked>
+						<label for="language">Language</label>
+					</div>
+					
+					<div class="checkbox inline">
+						<input id="relevance" type="checkbox" name="relevance" value="true" checked> 
+						<label for="relevance">Relevance</label>
+					</div>
+					
+					<div class="checkbox inline">
+						<input id="duration" type="checkbox" name="duration" value="true" checked> 
+						<label for="duration">Duration</label>
+					</div>
+					
+					<div style="color:#777"><h5><span>Ordering</span></h5></div>
+					
+					<div class="checkbox inline">
+						<input id="location" type="checkbox" name="location" value="true"> 
+						<label for="location">Location</label>
+					</div>
+					
+					<div class="checkbox inline">
+						<input id="weightOrder" type="checkbox" name="weightOrder" value="true" checked>
+						<label for="weightOrder">Segment Weight</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="padding: 5px;">
+			<div class="col-sm-8" style="color:#777">
+				<h5><span>Available Strategies</span></h5>
+				<form action="#">
+					<select class="form-control" id="availableStratgies">
+						
+					</select>
+				</form>
 				<button id="searchbtn" type="button" class="btn btn-default btn-block">Search</button>
 			</div>
 		</div>
 		<br>
+		
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="progress">
@@ -135,7 +176,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<br>
 		<div class="row">
 			<div class="col-sm-12">
-				<div id="xmpp_status" class="list" style="border-style: inset;"> </div>
+				<div id="xmpp_status" class="list" style="border-style: inset; display:none;"> </div>
 			</div>
 			<br>
 		</div>

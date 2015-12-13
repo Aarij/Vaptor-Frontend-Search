@@ -31,7 +31,7 @@
  */
 
 var client;
-
+var messageCounter = 0;
 /*var init = function() {
   
 	client = new iwc.Client();
@@ -103,13 +103,30 @@ $(document).ready(function() {
 					var verified_username = jsonData.preferred_username.toString();
 					console.log("user from search verification: "+verified_username);
 					
+					$(document).on('change', '#location', function() {
+						if(document.getElementById("location").checked){
+							document.getElementById("weightOrder").checked = false;
+						}
+					});
+					$(document).on('change', '#weightOrder', function() {
+						if(document.getElementById("weightOrder").checked){
+							document.getElementById("location").checked = false;
+						}
+					});
+					
+					getStrategy(localStorage.access_token);
+					
 					$("#searchbtn").click(function(event){
+					
+						messageCounter = 0;
 			
 						document.getElementById("xmpp_status").innerHTML = "";
 						var languageCheck = document.getElementById("language").checked;
 						var locationCheck = document.getElementById("location").checked;
 						var durationCheck = document.getElementById("duration").checked;
-						var adaptationCheck = document.getElementById("adaptation").checked;
+						var relevanceCheck = document.getElementById("relevance").checked;
+						var weightOrderCheck = document.getElementById("weightOrder").checked;
+						var sequence = $('#checkboxOrder').data('sequence');
 						
 						valeur = 0;
 						$('.progress-bar').css('width', valeur+'%').attr('aria-valuenow', valeur);
@@ -118,8 +135,12 @@ $(document).ready(function() {
 						//var access_token = url.substring(url.indexOf('access_token')+13);
 						var access_token = localStorage.access_token;
 						getLocation();
+						var searchString = document.getElementById("searchString").value;
+						searchString = searchString.removeStopWords();
+						console.log("Stemmed string: "+ searchString);
 						//getVideos(document.getElementById("searchString").value, oidc_userinfo["preferred_username"], lat, lng, postGetVideos);
-						getVideos(document.getElementById("searchString").value, access_token, lat, lng, languageCheck, locationCheck, durationCheck, adaptationCheck, getVideosIntent);
+						getVideos(searchString, access_token, lat, lng, languageCheck, locationCheck, durationCheck, relevanceCheck, weightOrderCheck, sequence, getVideosIntent);
+						getRelatedSearchIntent(searchString);
 						//playVideos();
 					});
 					
@@ -136,18 +157,22 @@ $(document).ready(function() {
 					}
 
 					on_message = function (message){
-						
+					
 						//console.log("message");
 						var bodyTag = message.getElementsByTagName("body");
-						
+						console.log("messageCounter: "+messageCounter);
 						if(bodyTag[0]){
-							document.getElementById("xmpp_status").innerHTML += "<span>"+bodyTag[0].innerHTML+"<br></span>";
-							//document.getElementById("progress-bar").innerHTML="";
-							valeur +=10;
-							$('.progress-bar').css('width', valeur+'%').attr('aria-valuenow', valeur);
-							//document.getElementById("progress-bar").innerHTML=valueur;
-							//console.log(bodyTag[0].innerHTML);
+							if(messageCounter<11){
+								document.getElementById("xmpp_status").innerHTML += "<span>"+bodyTag[0].innerHTML+"<br></span>";
+								document.getElementById("progress-bar").innerHTML = "<span>"+bodyTag[0].innerHTML+"</span>";
+								//document.getElementById("progress-bar").innerHTML="";
+								valeur +=9.09090909;
+								$('.progress-bar').css('width', valeur+'%').attr('aria-valuenow', valeur);
+								//document.getElementById("progress-bar").innerHTML=valueur;
+								//console.log(bodyTag[0].innerHTML);
+							}
 						}
+						messageCounter++;
 						return true;
 					}
 					
@@ -224,6 +249,127 @@ $(document).ready(function() {
 			});
 		}
 	
+	
+		function getStrategy(access_token){
+			
+			$.ajax({
+			
+				url: "http://eiche.informatik.rwth-aachen.de:7074/adapter/strategy?Authorization=Bearer "+access_token,
+				type: "GET",
+				dataType:'text',
+				success: function(value) {
+					
+					JSONResponse = value;
+					
+					var jsonData = JSON.parse(value);
+					var dropbox="<option id=\"*\" value=\"*\" selected>Select</option>";
+
+					for (var i = 0; i < jsonData.length; i++) {
+						var strategies = jsonData[i];
+						strategy = strategies.strategy.toString();
+						
+						dropbox += "<option id=\""+strategy+"\" value=\""+strategy+"\">"+strategy+"</option>";
+					}
+					document.getElementById("availableStratgies").innerHTML=dropbox;
+					
+					$('#availableStratgies').change(
+						function() {
+							var strategy = $('#availableStratgies option:selected').val();
+							
+							getData(strategy);
+						}
+					);
+				},
+				statusCode: {
+					401: function() {
+						document.getElementById("notification").innerHTML = "<span style=\"background:#C90016; float:left; color:#FFF; width:100%; text-align:center;\">You are not logged in!</span>";
+					},
+					404: function() {
+						document.getElementById("notification").innerHTML = "<span style=\"background:#C90016; float:left; color:#FFF; width:100%; text-align:center;\">Something went wrong, please try again!</span>";
+					}
+				},
+				error: function(e){console.log(e);}
+			});
+		}
+	
+		function getData(strategy){
+			
+			if(strategy== "*"){
+				var newList="<div style=\"color:#777\"><h5><span>Filters</span></h5></div>   <div class=\"checkbox inline\"> <input id=\"language\" type=\"checkbox\" name=\"language\" value=\"true\" checked> <label for=\"language\">Language</label> </div>  <div class=\"checkbox inline\"> <input id=\"relevance\" type=\"checkbox\" name=\"relevance\" value=\"true\" checked>  <label for=\"relevance\">Relevance</label> </div>  <div class=\"checkbox inline\"> <input id=\"duration\" type=\"checkbox\" name=\"duration\" value=\"true\" checked>  <label for=\"duration\">Duration</label> </div>  <div style=\"color:#777\"><h5><span>Ordering</span></h5></div>  <div class=\"checkbox inline\"> <input id=\"location\" type=\"checkbox\" name=\"location\" value=\"true\">  <label for=\"location\">Location</label> </div>  <div class=\"checkbox inline\"> <input id=\"weightOrder\" type=\"checkbox\" name=\"weightOrder\" value=\"true\" checked> <label for=\"weightOrder\">Segment Weight</label> </div>";
+				
+				document.getElementById("checkboxOrder").innerHTML = newList;
+			}
+			
+			else{
+				var jsonData = JSON.parse(JSONResponse);
+
+				var language;
+				var location;
+				var duration;
+				var relevance;
+				var weightOrder;
+				var sequence;
+
+				for (var i = 0; i < jsonData.length; i++) {
+					var strategies = jsonData[i];
+					
+					if(strategy== strategies.strategy.toString()){
+						
+						language = strategies.language.toString();
+						location = strategies.location.toString();
+						duration = strategies.duration.toString();
+						relevance = strategies.relevance.toString();
+						weightOrder = strategies.weightOrder.toString();
+						sequence = strategies.sequence.toString();
+						$('#checkboxOrder').data('sequence',sequence);
+					}
+				}
+				
+				document.getElementById("checkboxOrder").innerHTML = "";
+				var newList="";
+				for(var i=0; i<sequence.length; i++){
+				
+					switch (sequence[i]){
+						
+						case 'L':
+							newList += "<div class=\"checkbox inline\"><input id=\"language\" type=\"checkbox\" name=\"language\" value=\"true\"><label for=\"language\">Language</label></div>";
+							break;
+						case 'R':
+							newList += "<div class=\"checkbox inline\"><input id=\"relevance\" type=\"checkbox\" name=\"relevance\" value=\"true\"><label for=\"language\">Relevance</label></div>";
+							break;
+						case 'D':
+							newList += "<div class=\"checkbox inline\"><input id=\"duration\" type=\"checkbox\" name=\"duration\" value=\"true\"><label for=\"language\">Duration</label></div>";
+							break;
+						case 'O':
+							newList += "<div class=\"checkbox inline\"><input id=\"location\" type=\"checkbox\" name=\"location\" value=\"true\"><label for=\"language\">Location</label></div>";
+							break;
+						case 'W':
+							newList += "<div class=\"checkbox inline\"><input id=\"weightOrder\" type=\"checkbox\" name=\"weightOrder\" value=\"true\"><label for=\"language\">Segment Weight</label></div>";
+							break;
+					}
+					
+				}
+				
+				document.getElementById("checkboxOrder").innerHTML = newList;
+				
+				
+				if(language == 0) $('#language').prop('checked', false);
+				else $('#language').prop('checked', true);
+				
+				if(location == 0) $('#location').prop('checked', false);
+				else $('#location').prop('checked', true);
+				
+				if(duration == 0) $('#duration').prop('checked', false);
+				else $('#duration').prop('checked', true);
+				
+				if(relevance == 0) $('#relevance').prop('checked', false);
+				else $('#relevance').prop('checked', true);
+				
+				if(weightOrder == 0) $('#weightOrder').prop('checked', false);
+				else $('#weightOrder').prop('checked', true);
+			
+			}
+		}
 		
 		//-----------------------------------------------------------------------
 		// Location Functions Start
@@ -255,15 +401,15 @@ $(document).ready(function() {
 		//-----------------------------------------------------------------------
 		
 		
-		function getVideos(searchString, access_token, lat, lng, languageCheck, locationCheck, durationCheck, adaptationCheck, getVideosIntent){
+		function getVideos(searchString, access_token, lat, lng, languageCheck, locationCheck, durationCheck, relevanceCheck, weightOrderCheck, sequence, getVideosIntent){
 		
 			if(window.mobilecheck()){
 				//var uri = "http://eiche.informatik.rwth-aachen.de:7074/adapter/getPlaylist?sub=123&search="+searchString+"&username="+username+"&lat="+lat+"&lng="+lng+"&mobile="+window.mobilecheck();
-				var uri = "http://eiche.informatik.rwth-aachen.de:7074/adapter/playlist?sub=123&search="+searchString+"&Authorization=Bearer "+access_token+"&lat="+lat+"&lng="+lng+"&mobile="+window.mobilecheck()+"&language="+languageCheck+"&location="+locationCheck+"&duration="+durationCheck+"&adaptation="+adaptationCheck;
+				var uri = "http://eiche.informatik.rwth-aachen.de:7074/adapter/playlist?sub=123&search="+searchString+"&Authorization=Bearer "+access_token+"&lat="+lat+"&lng="+lng+"&mobile="+window.mobilecheck()+"&language="+languageCheck+"&location="+locationCheck+"&duration="+durationCheck+"&relevance="+relevanceCheck+"&weightOrder="+weightOrderCheck+"&sequence="+sequence;
 			}
 			else{
 				//var uri = "http://eiche.informatik.rwth-aachen.de:7074/adapter/getPlaylist?sub=123&search="+searchString+"&username="+username+"&lat="+lat+"&lng="+lng;
-				var uri = "http://eiche.informatik.rwth-aachen.de:7074/adapter/playlist?sub=123&search="+searchString+"&Authorization=Bearer "+access_token+"&lat="+lat+"&lng="+lng+"&language="+languageCheck+"&location="+locationCheck+"&duration="+durationCheck+"&adaptation="+adaptationCheck;
+				var uri = "http://eiche.informatik.rwth-aachen.de:7074/adapter/playlist?sub=123&search="+searchString+"&Authorization=Bearer "+access_token+"&lat="+lat+"&lng="+lng+"&language="+languageCheck+"&location="+locationCheck+"&duration="+durationCheck+"&relevance="+relevanceCheck+"&weightOrder="+weightOrderCheck+"&sequence="+sequence;
 			}
 			
 			$.ajax({
@@ -296,17 +442,45 @@ $(document).ready(function() {
 		
 		function getVideosIntent(value){
 		
-			document.getElementById("notification").innerHTML = "";
+			if(value!="No Annotation"){
+				document.getElementById("notification").innerHTML = "";
+
+				client = new iwc.Client();
+				console.log("Search widget: inside getVideosIntent");
+
+				var intent = {
+					"component":"",
+					"sender":"",
+					"data":value,
+					"dataType":"text/xml",
+					"action":"getVideos",
+					"categories":["category1","category2"],
+					"flags":["PUBLISH_LOCAL"],
+					"extras":{"key1":"val1","key2":2}
+				}
+							
+				if(iwc.util.validateIntent(intent)){
+					client.publish(intent);
+				}
+			}
+			else{
+				document.getElementById("progress-bar").innerHTML = "<span>No results found!</span>";
+			}
+		}
+		
+		function getRelatedSearchIntent(value){
+		
+			//document.getElementById("notification").innerHTML = "";
 
 			client = new iwc.Client();
-			console.log("Search widget: inside getVideosIntent");
+			console.log("Search widget: inside getRelatedSearchIntent");
 
 			var intent = {
 				"component":"",
 				"sender":"",
 				"data":value,
 				"dataType":"text/xml",
-				"action":"getVideos",
+				"action":"getRelatedSearch",
 				"categories":["category1","category2"],
 				"flags":["PUBLISH_LOCAL"],
 				"extras":{"key1":"val1","key2":2}
